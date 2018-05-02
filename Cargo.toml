@@ -1,0 +1,7 @@
+[package]
+name = "pdf-mod"
+version = "0.1.0"
+authors = ["Fin Christensen <christensen.fin@gmail.com>"]
+
+[dependencies]
+lopdf = "^0"
