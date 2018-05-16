@@ -3,9 +3,6 @@ extern crate lopdf;
 use lopdf::{Document, Object, Dictionary};
 use std::error::Error as StdError;
 
-// the below code has way too many unwraps...
-// I should start handling these freakin errors!
-
 // note: creating thumbnails:
 // convert -thumbnail x300 -background white -alpha remove my.pdf thumb.png
 //
