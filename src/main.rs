@@ -28,29 +28,40 @@ fn get_pages<'a>(doc: &'a Document) -> Vec<&'a Object> {
         .collect()
 }
 
+fn clone_dictionary(from: &Document, to: &mut Document, dict: &Dictionary) -> Result<Dictionary, String> {
+    let mut new = Dictionary::new();
+
+    for (key, val) in dict {
+        let mut was_ref: bool;
+        let deref = match val.as_reference() {
+            None => {
+                was_ref = false;
+                val
+            },
+            Some(id) => {
+                was_ref = true;
+                from.get_object(id).ok_or("Failed to get object instance from reference!")?
+            },
+        };
+        let mut cloned = match deref.as_dict() {
+            None => deref.clone(),
+            Some(d) => clone_dictionary(from, to, &d)?.into(),
+        };
+
+        if was_ref {
+            cloned = to.add_object(cloned).into();
+        }
+
+        new.set(key.clone(), cloned);
+    }
+    Ok(new)
+}
+
 fn clone_page_into(from: &Document, into: &mut Document, page: usize) {
     let from_pages = get_pages(from);
     let from_page = from_pages.get(page).unwrap().as_dict().unwrap();
-
-    let contents = from.get_object(
-        from_page.get("Contents").unwrap().as_reference().unwrap()
-    ).unwrap().as_stream().unwrap();
-    let contents_ref = into.add_object(contents.clone());
-
-    let resources = from.get_object(
-        from_page.get("Resources").unwrap().as_reference().unwrap()
-    ).unwrap().as_dict().unwrap();
-    let resources_ref = into.add_object(resources.clone());
-
-    let media_box = from_page.get("MediaBox").unwrap().as_array().unwrap().clone();
-
     let parent_ref = get_pages(into)[0].as_dict().unwrap().get("Parent").unwrap().as_reference().unwrap();
-
-    let mut clone = Dictionary::new();
-    clone.set("Type", Object::Name("Page".into()));
-    clone.set("Contents", contents_ref);
-    clone.set("Resources", resources_ref);
-    clone.set("MediaBox", media_box);
+    let mut clone = clone_dictionary(from, into, from_page).unwrap();
     clone.set("Parent", parent_ref);
     let clone_id = into.add_object(clone);
 
