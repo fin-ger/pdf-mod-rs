@@ -5,6 +5,11 @@ use lopdf::{Document, Object, Dictionary};
 // the below code has way too many unwraps...
 // I should start handling these freakin errors!
 
+// note: creating thumbnails:
+// convert -thumbnail x300 -background white -alpha remove my.pdf thumb.png
+//
+// This will produce a png thumbnail for each page in the document.
+
 fn get_pages<'a>(doc: &'a Document) -> Vec<&'a Object> {
     doc
         .get_object(
